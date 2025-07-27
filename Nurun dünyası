@@ -1,0 +1,32 @@
+from flask import Flask, render_template_string
+
+app = Flask(__name__)
+
+html = """
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <title>Nur'un Dünyası</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #fefefe; text-align: center; padding: 50px; }
+        h1 { color: #c94f7c; }
+        .card { background-color: #fff0f5; border-radius: 10px; padding: 20px; margin: 20px auto; width: 60%; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <h1>🌸 Nur'un Dünyası 🌸</h1>
+    <div class="card">
+        <h2>Hoş geldin!</h2>
+        <p>Ben Nur. Burası benim küçük sanal köşem. Hikayelerimi burada paylaşıyorum.</p>
+    </div>
+</body>
+</html>
+"""
+
+@app.route('/')
+def home():
+    return render_template_string(html)
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=10000)
